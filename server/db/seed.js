@@ -13,7 +13,7 @@ const VEHICLES = [
     price_per_day: 120,
     description: 'Compact and nimble camper van perfect for couples or solo travelers exploring scenic routes.',
     features: JSON.stringify(['Kitchen', 'Solar Panel', 'Bluetooth Audio', 'USB Charging', 'Popup Roof Bed']),
-    image_url: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?w=800&auto=format&fit=crop',
+    image_url: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?w=800&auto=format&fit=crop&q=80',
   },
   {
     name: 'Class C Motorhome',
