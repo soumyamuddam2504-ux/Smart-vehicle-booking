@@ -54,7 +54,7 @@ export default function Dashboard() {
       <Navbar activePage="dashboard" />
 
       {/* Page header */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="bg-white border-b border-gray-100 animate-fade-in">
         <div className="max-w-5xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>

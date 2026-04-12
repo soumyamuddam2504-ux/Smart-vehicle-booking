@@ -1,16 +1,33 @@
 import { useState } from 'react';
 
-const MAKES = [
-  'Winnebago', 'Thor Motor Coach', 'Forest River', 'Coachmen',
-  'EarthRoamer', 'Newmar', 'Keystone', 'Tiffin',
-];
+const MAKES_AND_MODELS = {
+  'Winnebago':       ['Travato', 'Revel', 'Solis', 'Minnie Winnie', 'Vista', 'Intent'],
+  'Thor Motor Coach':['Axis', 'Vegas', 'Compass', 'Magnitude', 'Sequence', 'Gemini'],
+  'Forest River':    ['Sunseeker', 'Georgetown', 'Berkshire', 'Salem', 'Rockwood', 'Flagstaff'],
+  'Coachmen':        ['Leprechaun', 'Freelander', 'Pursuit', 'Beyond', 'Nova', 'Encore'],
+  'EarthRoamer':     ['XV-HD', 'XV-LTS', 'LTi'],
+  'Newmar':          ['King Aire', 'Dutch Star', 'Bay Star', 'Ventana', 'Kountry Star', 'London Aire'],
+  'Keystone':        ['Carbon', 'Cougar', 'Montana', 'Passport', 'Springdale', 'Bullet'],
+  'Tiffin':          ['Allegro Bus', 'Allegro Red', 'Phaeton', 'Wayfarer', 'Breeze', 'Open Road'],
+  'Airstream':       ['Interstate', 'Atlas', 'Classic', 'Bambi', 'Caravel', 'Flying Cloud'],
+  'Fleetwood':       ['Bounder', 'Storm', 'Flair', 'Discovery', 'Pace Arrow', 'Fortis'],
+  'Jayco':           ['Precept', 'Greyhawk', 'Alante', 'Eagle', 'White Hawk', 'Redhawk'],
+  'Leisure Travel':  ['Unity', 'Wonder', 'Serenity', 'Free', 'Plateau'],
+};
 
-const YEARS = ['2024', '2023', '2022', '2021', '2020'];
+const MAKES = Object.keys(MAKES_AND_MODELS).sort();
+const YEARS = ['2025', '2024', '2023', '2022', '2021', '2020'];
 
 export default function AdvancedFilters({ filters, onChange }) {
   const [open, setOpen] = useState(false);
   const hasActive = filters.make || filters.model || filters.year;
   const activeCount = [filters.make, filters.model, filters.year].filter(Boolean).length;
+
+  const models = filters.make ? (MAKES_AND_MODELS[filters.make] || []) : [];
+
+  function handleMakeChange(e) {
+    onChange({ ...filters, make: e.target.value, model: '' });
+  }
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
@@ -21,7 +38,8 @@ export default function AdvancedFilters({ filters, onChange }) {
       >
         <span className="flex items-center gap-2">
           <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
           </svg>
           Advanced Filters
           {hasActive && (
@@ -39,31 +57,54 @@ export default function AdvancedFilters({ filters, onChange }) {
       </button>
 
       {open && (
-        <div className="p-4 bg-white border-t border-gray-100">
+        <div className="p-4 bg-white border-t border-gray-100 animate-fade-in">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Make */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Make</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Make
+              </label>
               <select
                 value={filters.make}
-                onChange={(e) => onChange({ ...filters, make: e.target.value })}
+                onChange={handleMakeChange}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
               >
                 <option value="">Any Make</option>
                 {MAKES.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
+
+            {/* Model — dynamic based on make */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Model</label>
-              <input
-                type="text"
-                value={filters.model}
-                onChange={(e) => onChange({ ...filters, model: e.target.value })}
-                placeholder="e.g. Travato"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
-              />
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Model
+              </label>
+              {filters.make ? (
+                <select
+                  value={filters.model}
+                  onChange={(e) => onChange({ ...filters, model: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                >
+                  <option value="">Any Model</option>
+                  {models.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={filters.model}
+                  onChange={(e) => onChange({ ...filters, model: e.target.value })}
+                  placeholder="Select a make first"
+                  disabled
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                />
+              )}
             </div>
+
+            {/* Year */}
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Year</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Year
+              </label>
               <select
                 value={filters.year}
                 onChange={(e) => onChange({ ...filters, year: e.target.value })}
@@ -74,6 +115,7 @@ export default function AdvancedFilters({ filters, onChange }) {
               </select>
             </div>
           </div>
+
           {hasActive && (
             <button
               type="button"

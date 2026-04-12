@@ -4,6 +4,7 @@ import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import PaymentForm from '../components/PaymentForm';
 import Navbar from '../components/Navbar';
+import LocationInput from '../components/LocationInput';
 
 const TRIP_LABELS = {
   city: 'City Driving',
@@ -197,12 +198,10 @@ export default function Book() {
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pickup Location</label>
-                  <input
-                    type="text"
+                  <LocationInput
                     value={tripDetails.pickupLocation}
-                    onChange={(e) => setTripDetails({ ...tripDetails, pickupLocation: e.target.value })}
-                    placeholder="e.g. Denver, CO"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                    onChange={(val) => setTripDetails({ ...tripDetails, pickupLocation: val })}
+                    placeholder="Search city or park..."
                   />
                 </div>
 

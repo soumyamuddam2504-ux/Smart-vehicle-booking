@@ -24,7 +24,7 @@ export default function VehicleCard({ vehicle, onBook, rank }) {
   const rankBadge = RANK_BADGES[rank];
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 group">
+    <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 group animate-slide-up">
       {/* Image */}
       <div className="relative h-52 bg-gray-100 overflow-hidden">
         <img
