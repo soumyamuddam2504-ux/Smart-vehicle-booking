@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 const PAYMENT_METHODS = [
-  { value: 'credit', label: 'Credit Card' },
-  { value: 'debit', label: 'Debit Card' },
-  { value: 'paypal', label: 'PayPal' },
+  { value: 'credit', label: 'Credit Card', icon: '💳' },
+  { value: 'debit', label: 'Debit Card', icon: '🏦' },
+  { value: 'paypal', label: 'PayPal', icon: '🅿' },
 ];
 
 export default function PaymentForm({ totalCost, onConfirm }) {
@@ -39,8 +39,7 @@ export default function PaymentForm({ totalCost, onConfirm }) {
         return 'Please enter a valid PayPal email address.';
     } else {
       if (!card.name.trim()) return 'Name on card is required.';
-      const digits = card.number.replace(/\s/g, '');
-      if (digits.length !== 16) return 'Card number must be 16 digits.';
+      if (card.number.replace(/\s/g, '').length !== 16) return 'Card number must be 16 digits.';
       if (!/^\d{2}\/\d{2}$/.test(card.expiry)) return 'Expiry must be in MM/YY format.';
       if (card.cvv.length < 3) return 'CVV must be 3 or 4 digits.';
     }
@@ -51,32 +50,31 @@ export default function PaymentForm({ totalCost, onConfirm }) {
     e.preventDefault();
     const err = validate();
     if (err) { setError(err); return; }
-
     const summary =
       method === 'paypal'
         ? `PayPal (${paypalEmail})`
         : `${method === 'credit' ? 'Credit' : 'Debit'} card ending in ${card.number.replace(/\s/g, '').slice(-4)}`;
-
     onConfirm(summary);
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Payment method selector */}
+      {/* Method selector */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-2">Payment Method</p>
-        <div className="flex gap-3">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Payment Method</p>
+        <div className="grid grid-cols-3 gap-2">
           {PAYMENT_METHODS.map((m) => (
             <button
               type="button"
               key={m.value}
               onClick={() => { setMethod(m.value); setError(''); }}
-              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition ${
+              className={`flex flex-col items-center gap-1 py-3 rounded-xl border text-xs font-semibold transition-all ${
                 method === m.value
-                  ? 'border-blue-600 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                  : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
+              <span className="text-lg">{m.icon}</span>
               {m.label}
             </button>
           ))}
@@ -85,20 +83,20 @@ export default function PaymentForm({ totalCost, onConfirm }) {
 
       {/* Card fields */}
       {(method === 'credit' || method === 'debit') && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name on Card</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Name on Card</label>
             <input
               type="text"
               name="name"
               value={card.name}
               onChange={handleCardChange}
-              placeholder="Soumya Reddy"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Full name as on card"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Card Number</label>
             <input
               type="text"
               name="number"
@@ -106,12 +104,12 @@ export default function PaymentForm({ totalCost, onConfirm }) {
               onChange={handleCardChange}
               placeholder="4242 4242 4242 4242"
               inputMode="numeric"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 tracking-widest"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Expiry</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Expiry</label>
               <input
                 type="text"
                 name="expiry"
@@ -119,11 +117,11 @@ export default function PaymentForm({ totalCost, onConfirm }) {
                 onChange={handleCardChange}
                 placeholder="MM/YY"
                 inputMode="numeric"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">CVV</label>
               <input
                 type="password"
                 name="cvv"
@@ -131,41 +129,41 @@ export default function PaymentForm({ totalCost, onConfirm }) {
                 onChange={handleCardChange}
                 placeholder="•••"
                 inputMode="numeric"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* PayPal field */}
+      {/* PayPal */}
       {method === 'paypal' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">PayPal Email</label>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">PayPal Email</label>
           <input
             type="email"
             value={paypalEmail}
             onChange={(e) => setPaypalEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="your-paypal@example.com"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
           />
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 text-red-600 text-sm rounded-lg px-4 py-3">{error}</div>
+        <div className="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3">{error}</div>
       )}
 
       <div className="border-t border-gray-100 pt-4 flex justify-between items-center">
         <div>
-          <p className="text-xs text-gray-400">Total due today</p>
-          <p className="text-xl font-bold text-gray-800">${totalCost.toLocaleString('en-US')}</p>
+          <p className="text-xs text-gray-400 mb-0.5">Total due today</p>
+          <p className="text-2xl font-bold text-gray-900">${totalCost.toLocaleString('en-US')}</p>
         </div>
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all shadow-sm hover:shadow-md"
         >
-          Continue to Review →
+          Review Booking →
         </button>
       </div>
     </form>

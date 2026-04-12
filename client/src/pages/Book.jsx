@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import PaymentForm from '../components/PaymentForm';
+import Navbar from '../components/Navbar';
 
 const TRIP_LABELS = {
   city: 'City Driving',
@@ -28,8 +29,12 @@ export default function Book() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [step, setStep] = useState(1); // 1 = trip details, 2 = payment, 3 = confirm
-  const [tripDetails, setTripDetails] = useState({ startDate: '', endDate: '', pickupLocation: '' });
+  const [step, setStep] = useState(1);
+  const [tripDetails, setTripDetails] = useState({
+    startDate: state?.tripDetails?.startDate || '',
+    endDate: state?.tripDetails?.endDate || '',
+    pickupLocation: state?.tripDetails?.pickupLocation || '',
+  });
   const [tripError, setTripError] = useState('');
   const [paymentSummary, setPaymentSummary] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,13 +48,14 @@ export default function Book() {
   const { vehicle, tripDetails: searchDetails } = state;
   const durationDays = calcDays(tripDetails.startDate, tripDetails.endDate);
   const totalCost = vehicle.price_per_day * (durationDays || Number(searchDetails.durationDays));
-
   const today = new Date().toISOString().split('T')[0];
+
+  const steps = ['Trip Details', 'Payment', 'Confirm'];
 
   function handleTripNext(e) {
     e.preventDefault();
     setTripError('');
-    if (!tripDetails.startDate || !tripDetails.endDate) { setTripError('Please select start and end dates.'); return; }
+    if (!tripDetails.startDate || !tripDetails.endDate) { setTripError('Please select both start and end dates.'); return; }
     if (tripDetails.endDate <= tripDetails.startDate) { setTripError('End date must be after start date.'); return; }
     if (!tripDetails.pickupLocation.trim()) { setTripError('Please enter a pickup location.'); return; }
     setStep(2);
@@ -81,24 +87,19 @@ export default function Book() {
     }
   }
 
-  const steps = ['Trip Details', 'Payment', 'Confirm'];
-
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🚐</span>
-          <h1 className="text-lg font-bold text-blue-600 tracking-tight">SmartRide</h1>
-        </div>
-        <span className="text-sm text-gray-500">Hi, <span className="font-medium text-gray-700">{user?.name}</span></span>
-      </nav>
+      <Navbar />
 
-      <div className="max-w-lg mx-auto px-4 py-10">
+      <div className="max-w-xl mx-auto px-4 py-8">
         <button
           onClick={() => (step === 1 ? navigate(-1) : setStep(step - 1))}
-          className="text-sm text-blue-600 hover:underline mb-6 inline-flex items-center gap-1"
+          className="text-sm text-blue-600 hover:text-blue-700 mb-6 inline-flex items-center gap-1.5 font-medium"
         >
-          ← {step === 1 ? 'Back to results' : `Back to ${steps[step - 2]}`}
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          {step === 1 ? 'Back to results' : `Back to ${steps[step - 2]}`}
         </button>
 
         {/* Step indicator */}
@@ -106,46 +107,60 @@ export default function Book() {
           {steps.map((label, i) => (
             <div key={label} className="flex items-center flex-1 last:flex-none">
               <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                  i + 1 < step ? 'bg-green-500 border-green-500 text-white'
-                  : i + 1 === step ? 'bg-blue-600 border-blue-600 text-white'
-                  : 'bg-white border-gray-200 text-gray-400'
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
+                  i + 1 < step
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : i + 1 === step
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                    : 'bg-white border-gray-200 text-gray-400'
                 }`}>
-                  {i + 1 < step ? '✓' : i + 1}
+                  {i + 1 < step
+                    ? <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                    : i + 1}
                 </div>
-                <span className={`text-xs mt-1 font-medium ${i + 1 === step ? 'text-blue-600' : 'text-gray-400'}`}>{label}</span>
+                <span className={`text-xs mt-1.5 font-semibold ${i + 1 === step ? 'text-blue-600' : i + 1 < step ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  {label}
+                </span>
               </div>
               {i < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-2 mb-4 ${i + 1 < step ? 'bg-green-400' : 'bg-gray-200'}`} />
+                <div className={`flex-1 h-0.5 mx-3 mb-5 rounded-full transition-all ${i + 1 < step ? 'bg-emerald-400' : 'bg-gray-200'}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
-          {/* Vehicle summary — always visible */}
-          <div className="flex gap-4 mb-6 pb-5 border-b border-gray-100">
+        {/* Vehicle summary card */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden mb-4">
+          <div className="flex gap-0">
             <img
               src={vehicle.image_url}
               alt={vehicle.name}
-              className="w-20 h-16 rounded-xl object-cover flex-shrink-0"
+              className="w-28 h-24 object-cover flex-shrink-0"
               onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&auto=format&fit=crop'; }}
             />
-            <div>
-              <p className="font-bold text-gray-900">{vehicle.name}</p>
-              <p className="text-sm text-gray-500">{vehicle.make} {vehicle.model} · {vehicle.year}</p>
-              <p className="text-sm text-gray-500">{vehicle.capacity} seats · Sleeps {vehicle.sleeping_capacity}</p>
+            <div className="flex-1 px-4 py-3 flex flex-col justify-center">
+              <p className="font-bold text-gray-900 text-sm leading-tight">{vehicle.name}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{vehicle.make} {vehicle.model} &middot; {vehicle.year}</p>
+              <p className="text-xs text-gray-400 mt-1">{vehicle.capacity} seats &middot; Sleeps {vehicle.sleeping_capacity}</p>
+            </div>
+            <div className="px-4 py-3 text-right flex flex-col justify-center flex-shrink-0">
+              <p className="text-lg font-bold text-gray-900">${vehicle.price_per_day.toLocaleString('en-US')}</p>
+              <p className="text-xs text-gray-400">per day</p>
             </div>
           </div>
+        </div>
 
+        {/* Main step card */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
           {/* Step 1 — Trip Details */}
           {step === 1 && (
             <>
-              <h2 className="text-lg font-bold text-gray-800 mb-4">Trip Details</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Trip Details</h2>
+              <p className="text-sm text-gray-500 mb-5">Confirm your dates and pickup location.</p>
               <form onSubmit={handleTripNext} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Start Date</label>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Start Date</label>
                     <input
                       type="date"
                       min={today}
@@ -155,7 +170,7 @@ export default function Book() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">End Date</label>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">End Date</label>
                     <input
                       type="date"
                       min={tripDetails.startDate || today}
@@ -167,13 +182,21 @@ export default function Book() {
                 </div>
 
                 {durationDays > 0 && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 text-sm text-blue-700 font-medium">
-                    {durationDays} day{durationDays > 1 ? 's' : ''} · Estimated total: <strong>${(vehicle.price_per_day * durationDays).toLocaleString('en-US')}</strong>
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-blue-700 font-medium">
+                      <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {durationDays} day{durationDays > 1 ? 's' : ''}
+                    </div>
+                    <p className="text-sm font-bold text-blue-800">
+                      Est. total: ${(vehicle.price_per_day * durationDays).toLocaleString('en-US')}
+                    </p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Pickup Location</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pickup Location</label>
                   <input
                     type="text"
                     value={tripDetails.pickupLocation}
@@ -189,7 +212,7 @@ export default function Book() {
 
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-sm hover:shadow-md"
                 >
                   Continue to Payment →
                 </button>
@@ -200,7 +223,8 @@ export default function Book() {
           {/* Step 2 — Payment */}
           {step === 2 && (
             <>
-              <h2 className="text-lg font-bold text-gray-800 mb-4">Payment Details</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Payment Details</h2>
+              <p className="text-sm text-gray-500 mb-5">Your payment info is secure and encrypted.</p>
               <PaymentForm totalCost={totalCost} onConfirm={handlePaymentConfirm} />
             </>
           )}
@@ -208,28 +232,35 @@ export default function Book() {
           {/* Step 3 — Confirm */}
           {step === 3 && (
             <>
-              <h2 className="text-lg font-bold text-gray-800 mb-1">Confirm Booking</h2>
-              <p className="text-sm text-gray-500 mb-5">Review everything before confirming.</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Confirm Booking</h2>
+              <p className="text-sm text-gray-500 mb-5">Review your trip details before confirming.</p>
 
-              <div className="space-y-2.5 mb-5">
+              <div className="bg-slate-50 rounded-xl p-4 mb-4 space-y-2.5">
                 <DetailRow label="Trip Type" value={TRIP_LABELS[searchDetails.tripType] || searchDetails.tripType} />
                 <DetailRow label="Start Date" value={formatDate(tripDetails.startDate)} />
                 <DetailRow label="End Date" value={formatDate(tripDetails.endDate)} />
                 <DetailRow label="Duration" value={`${durationDays} day${durationDays > 1 ? 's' : ''}`} />
                 <DetailRow label="No. of Seats" value={searchDetails.passengers} />
                 <DetailRow label="Pickup Location" value={tripDetails.pickupLocation} />
-                <DetailRow label="Rate" value={`$${vehicle.price_per_day.toLocaleString('en-US')} / day`} />
-                <div className="border-t border-gray-100 pt-3 mt-1">
-                  <DetailRow label="Total Cost" value={`$${totalCost.toLocaleString('en-US')}`} bold />
-                </div>
+                <DetailRow label="Daily Rate" value={`$${vehicle.price_per_day.toLocaleString('en-US')}`} />
+              </div>
+
+              <div className="bg-blue-600 rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
+                <p className="text-blue-200 text-sm font-medium">Total Cost</p>
+                <p className="text-2xl font-bold text-white">${totalCost.toLocaleString('en-US')}</p>
               </div>
 
               <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-400 mb-0.5">Payment via</p>
-                  <p className="text-sm font-semibold text-gray-700">{paymentSummary}</p>
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-400">Payment via</p>
+                    <p className="text-sm font-semibold text-gray-700">{paymentSummary}</p>
+                  </div>
                 </div>
-                <button onClick={() => setStep(2)} className="text-xs text-blue-600 hover:underline">Change</button>
+                <button onClick={() => setStep(2)} className="text-xs text-blue-600 hover:underline font-medium">Change</button>
               </div>
 
               {bookingError && (
@@ -239,10 +270,14 @@ export default function Book() {
               <button
                 onClick={handleBookingConfirm}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors disabled:opacity-50"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl text-sm transition-all shadow-sm hover:shadow-md disabled:opacity-50"
               >
                 {loading ? 'Confirming...' : 'Confirm Booking'}
               </button>
+
+              <p className="text-xs text-gray-400 text-center mt-3">
+                By confirming, you agree to our booking terms and cancellation policy.
+              </p>
             </>
           )}
         </div>
@@ -251,11 +286,11 @@ export default function Book() {
   );
 }
 
-function DetailRow({ label, value, bold }) {
+function DetailRow({ label, value }) {
   return (
     <div className="flex justify-between items-center text-sm">
       <span className="text-gray-500">{label}</span>
-      <span className={bold ? 'font-bold text-gray-900 text-base' : 'text-gray-800 font-medium'}>{value}</span>
+      <span className="text-gray-900 font-semibold">{value}</span>
     </div>
   );
 }
