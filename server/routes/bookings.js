@@ -11,8 +11,8 @@ router.post('/', requireAuth, (req, res) => {
   if (!vehicleId || !tripType || !durationDays || !passengers || !totalCost || !startDate || !endDate || !pickupLocation)
     return res.status(400).json({ error: 'All booking fields are required.' });
 
-  const vehicle = db.prepare('SELECT id FROM vehicles WHERE id = ?').get(vehicleId);
-  if (!vehicle)
+  const vehicleExists = db.prepare('SELECT id FROM vehicles WHERE id = ?').get(vehicleId);
+  if (!vehicleExists)
     return res.status(404).json({ error: 'Vehicle not found.' });
 
   const result = db
