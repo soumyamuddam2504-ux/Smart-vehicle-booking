@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getBookings } from '../api/bookings';
 import Navbar from '../components/Navbar';
+import DashboardCharts from '../components/DashboardCharts';
+import ChatWidget from '../components/ChatWidget';
 
 const TRIP_LABELS = {
   city: 'City Driving',
@@ -106,6 +108,8 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <DashboardCharts bookings={bookings} />
+
         {loading && (
           <div className="text-center py-20">
             <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
@@ -205,6 +209,8 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <ChatWidget searchForm={null} results={null} bookings={bookings} />
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import PaymentForm from '../components/PaymentForm';
 import Navbar from '../components/Navbar';
 import LocationInput from '../components/LocationInput';
+import BookingPDF from '../components/BookingPDF';
 
 const TRIP_LABELS = {
   city: 'City Driving',
@@ -31,6 +33,7 @@ export default function Book() {
   const { user } = useAuth();
 
   const [step, setStep] = useState(1);
+  const [confirmedBooking, setConfirmedBooking] = useState(null);
   const [tripDetails, setTripDetails] = useState({
     startDate: state?.tripDetails?.startDate || '',
     endDate: state?.tripDetails?.endDate || '',
@@ -71,7 +74,7 @@ export default function Book() {
     setBookingError('');
     setLoading(true);
     try {
-      await createBooking({
+      const res = await createBooking({
         vehicleId: vehicle.id,
         tripType: searchDetails.tripType,
         durationDays,
@@ -81,11 +84,109 @@ export default function Book() {
         endDate: tripDetails.endDate,
         pickupLocation: tripDetails.pickupLocation,
       });
-      navigate('/dashboard');
+      setConfirmedBooking({
+        id: res.data.bookingId,
+        vehicle_name: vehicle.name,
+        make: vehicle.make,
+        model: vehicle.model,
+        year: vehicle.year,
+        image_url: vehicle.image_url,
+        trip_type: searchDetails.tripType,
+        start_date: tripDetails.startDate,
+        end_date: tripDetails.endDate,
+        duration_days: durationDays,
+        passengers: Number(searchDetails.passengers),
+        pickup_location: tripDetails.pickupLocation,
+        price_per_day: vehicle.price_per_day,
+        total_cost: totalCost,
+      });
     } catch (err) {
       setBookingError(err.response?.data?.error || 'Booking failed. Please try again.');
       setLoading(false);
     }
+  }
+
+  // Success screen
+  if (confirmedBooking) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Navbar />
+        <div className="max-w-lg mx-auto px-4 py-12 animate-slide-up">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+            {/* Green header */}
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 px-8 py-8 text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-1">Booking Confirmed!</h2>
+              <p className="text-emerald-100 text-sm">Reference #{confirmedBooking.id}</p>
+            </div>
+
+            {/* Vehicle summary */}
+            <div className="p-6">
+              <div className="flex gap-4 mb-6 pb-5 border-b border-gray-100">
+                <img
+                  src={confirmedBooking.image_url}
+                  alt={confirmedBooking.vehicle_name}
+                  className="w-20 h-16 rounded-xl object-cover flex-shrink-0"
+                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&auto=format&fit=crop'; }}
+                />
+                <div>
+                  <p className="font-bold text-gray-900">{confirmedBooking.vehicle_name}</p>
+                  <p className="text-sm text-gray-500">{confirmedBooking.make} {confirmedBooking.model} · {confirmedBooking.year}</p>
+                  <p className="text-xs text-gray-400 mt-1">{confirmedBooking.pickup_location}</p>
+                </div>
+              </div>
+
+              {/* Key details */}
+              <div className="space-y-2.5 mb-6">
+                {[
+                  ['Dates',    `${formatDate(confirmedBooking.start_date)} – ${formatDate(confirmedBooking.end_date)}`],
+                  ['Duration', `${confirmedBooking.duration_days} day${confirmedBooking.duration_days > 1 ? 's' : ''}`],
+                  ['Seats',    `${confirmedBooking.passengers}`],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between text-sm">
+                    <span className="text-gray-500">{label}</span>
+                    <span className="text-gray-900 font-semibold">{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 flex justify-between items-center mb-6">
+                <span className="text-emerald-700 text-sm font-medium">Total Paid</span>
+                <span className="text-xl font-bold text-emerald-800">${confirmedBooking.total_cost.toLocaleString('en-US')}</span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <PDFDownloadLink
+                  document={<BookingPDF booking={confirmedBooking} userName={user?.name} />}
+                  fileName={`SmartRide-Booking-${confirmedBooking.id}.pdf`}
+                  className="flex-1"
+                >
+                  {({ loading }) => (
+                    <button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-sm hover:shadow-md">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      {loading ? 'Preparing PDF...' : 'Download Confirmation PDF'}
+                    </button>
+                  )}
+                </PDFDownloadLink>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl text-sm transition-colors"
+                >
+                  View My Bookings
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

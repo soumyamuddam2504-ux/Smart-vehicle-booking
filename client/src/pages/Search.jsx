@@ -5,6 +5,7 @@ import VehicleCard from '../components/VehicleCard';
 import AdvancedFilters from '../components/AdvancedFilters';
 import Navbar from '../components/Navbar';
 import LocationInput from '../components/LocationInput';
+import ChatWidget from '../components/ChatWidget';
 
 const TRIP_TYPES = [
   { value: 'city',     label: 'City Driving' },
@@ -357,6 +358,8 @@ export default function Search() {
           </div>
         )}
       </div>
+
+      <ChatWidget searchForm={form} results={results} bookings={[]} />
     </div>
   );
 }

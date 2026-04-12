@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db/database');
 const { requireAuth } = require('../middleware/auth');
+const { sendBookingConfirmation } = require('../services/email');
 
 const router = express.Router();
 
@@ -22,7 +23,32 @@ router.post('/', requireAuth, (req, res) => {
     )
     .run(req.user.userId, vehicleId, tripType, durationDays, passengers, totalCost, startDate, endDate, pickupLocation);
 
-  res.status(201).json({ bookingId: result.lastInsertRowid });
+  const bookingId = result.lastInsertRowid;
+
+  // Send confirmation email (fire-and-forget — does not block response)
+  const user = db.prepare('SELECT name, email FROM users WHERE id = ?').get(req.user.userId);
+  const vehicle = db.prepare('SELECT name, make, model, year, price_per_day FROM vehicles WHERE id = ?').get(vehicleId);
+  sendBookingConfirmation({
+    to: user.email,
+    userName: user.name,
+    booking: {
+      bookingId,
+      vehicle_name: vehicle.name,
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      price_per_day: vehicle.price_per_day,
+      trip_type: tripType,
+      start_date: startDate,
+      end_date: endDate,
+      duration_days: durationDays,
+      passengers,
+      pickup_location: pickupLocation,
+      total_cost: totalCost,
+    },
+  });
+
+  res.status(201).json({ bookingId });
 });
 
 router.get('/', requireAuth, (req, res) => {
